@@ -1,5 +1,5 @@
 /**
- * Copyright © 2024 Cardknox Development Inc. All rights reserved.
+ * Copyright © 2026 Cardknox Development Inc. All rights reserved.
  * See LICENSE for license details.
  *
  * Mixin to prevent redirect to shipping step for virtual products on payment error
