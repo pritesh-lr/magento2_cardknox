@@ -39,6 +39,7 @@ define(
 
         let is3DSCallInProgress = false;
         let is3DSVerificationInProgress = false;
+        let is3DSInitialized = false;
 
         function handle3DSResults(
             actionCode,
@@ -363,15 +364,43 @@ define(
                 let checkCardLoaded = setInterval(function() {
                     clearInterval(checkCardLoaded);
                     focusIfield('card-number');
+                    // Setup 3DS after iFields are loaded if this payment method is already selected
+                    if (self.isChecked() === self.getCode()) {
+                        self.setup3DS();
+                    }
                 }, 1000);
+            },
+            /*
+             * [Optional]
+             * You can enable 3DS Authentication by calling enable3DS(environment [staging|production], verifyResultsHandler)
+             *
+             * verifyResultsHandler is a function that will be called by the 3D Secure internal code
+             * if a challenge is issued to the customer, and it will need to process the results and finalize
+             * the transaction.
+             *
+             * Note: enable3DS must be called after iFields are fully loaded (on user action/payment method selection),
+             * not during init, to avoid Cardinal error 10004.
+             */
+            setup3DS: function () {
+                if (is3DSInitialized) {
+                    return;
+                }
+                is3DSInitialized = true;
                 let isEnabledThreeDSEnabled = window.checkoutConfig.payment.cardknox.isEnabledThreeDSEnabled;
                 let threeDSEnvironment = window.checkoutConfig.payment.cardknox.ThreeDSEnvironment ?? "staging";
                 if (isEnabledThreeDSEnabled == true) {
-                    // enable3DS("staging", handle3DSResults);
                     enable3DS(threeDSEnvironment, handle3DSResults);
                 } else {
-                    enable3DS(threeDSEnvironment,null);
+                    enable3DS(threeDSEnvironment, null);
                 }
+            },
+            /**
+             * Override selectPaymentMethod to setup 3DS when user selects this payment method
+             */
+            selectPaymentMethod: function () {
+                this._super();
+                this.setup3DS();
+                return true;
             },
             /**
              * Prepare data to place order
